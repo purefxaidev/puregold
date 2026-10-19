@@ -1,0 +1,33 @@
+name: update-signals
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: update-signals
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Check Binance reachability
+        run: |
+          for h in api.binance.com data-api.binance.vision; do echo "$h -> $(curl -s -o /dev/null -w '%{http_code}' https://$h/api/v3/ping)"; done
+      - name: Run engine + resolve signals
+        run: node scripts/update.js
+      - name: Commit data
+        run: |
+          git config user.name "puregold-bot"
+          git config user.email "puregold-bot@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet && exit 0
+          git commit -m "data: update signals $(date -u +%FT%TZ)"
+          git pull --rebase --autostash || true
+          git push

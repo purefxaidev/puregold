@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PureGold — XAU/USD AI Analysis Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+Thai:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<script src="engine.js"></script>
+<style>
+:root{--bg:#06070a;--p:#0d0f14;--p2:#12151c;--b:#1d222c;--t:#e8e6df;--m:#8a8f9c;--g:#f5c542;--g2:#ffdf7e;--up:#22e39b;--dn:#ff4d6d;--cy:#3fd0ff;--pu:#b26bff;--or:#ff9f43}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--t);font:13px/1.4 "Noto Sans Thai",system-ui,sans-serif}
+.mono,.num{font-family:"IBM Plex Mono",monospace}
+a{color:var(--g)}
+.up{color:var(--up)}.dn{color:var(--dn)}.mu{color:var(--m)}.gd{color:var(--g)}
+header{display:flex;align-items:center;gap:14px;padding:8px 14px;border-bottom:1px solid var(--b);background:#08090d;position:sticky;top:0;z-index:20;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:18px;letter-spacing:.5px}
+.logo i{width:26px;height:26px;border-radius:7px;background:radial-gradient(circle at 35% 30%,#fff3c4,#f5c542 45%,#a87a12);box-shadow:0 0 14px #f5c54288;display:inline-block}
+.logo b{color:var(--g)}.logo small{display:block;font-size:9px;color:var(--m);font-weight:400;letter-spacing:1px}
+.hstat{display:flex;flex-direction:column;min-width:78px}.hstat span{font-size:10px;color:var(--m)}.hstat b{font:600 14px "IBM Plex Mono",monospace}
+.grow{flex:1}
+.clock{font:600 20px "IBM Plex Mono",monospace;color:var(--g2)}.clock small{font-size:10px;color:var(--m);display:block}
+.pill{border:1px solid var(--b);border-radius:20px;padding:3px 10px;font-size:11px;display:inline-flex;gap:6px;align-items:center;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--m)}.dot.on{background:var(--up);box-shadow:0 0 8px var(--up)}.dot.warn{background:var(--or)}.dot.off{background:var(--dn)}
+.strip{overflow:hidden;white-space:nowrap;border-bottom:1px solid var(--b);background:#090b0f;font:11px "IBM Plex Mono",monospace;height:24px;display:flex;align-items:center}
+.strip .tag{background:var(--g);color:#000;font-weight:700;padding:0 8px;height:100%;display:flex;align-items:center;flex:none}
+.strip .run{display:inline-block;padding-left:100%;animation:mq 60s linear infinite}.strip .run span{margin-right:26px}
+@keyframes mq{to{transform:translateX(-100%)}}
+.tiles{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;padding:8px 12px}
+.tile{background:var(--p);border:1px solid var(--b);border-radius:10px;padding:6px 10px;display:flex;gap:8px;align-items:center}
+.ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-weight:800;font-size:12px;color:#000;flex:none}
+.tile .n{font-size:10px;color:var(--m)}.tile .v{font:600 13px "IBM Plex Mono",monospace}
+main{padding:0 12px 12px;display:grid;gap:10px}
+.panel{background:var(--p);border:1px solid var(--b);border-radius:12px;padding:10px;min-width:0;position:relative}
+.ph{display:flex;justify-content:space-between;align-items:center;font-size:11px;letter-spacing:.6px;color:var(--m);margin-bottom:8px;text-transform:uppercase;gap:6px;flex-wrap:wrap}
+.ph b{color:var(--t);font-weight:700}
+.row1{display:grid;grid-template-columns:250px 1fr 300px;gap:10px}
+.row2{display:grid;grid-template-columns:320px 1fr 230px;gap:10px}
+.row3{display:grid;grid-template-columns:1.2fr 1fr;gap:10px}
+.row4{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:10px}
+.agent{display:flex;align-items:center;gap:8px;padding:6px;border:1px solid var(--b);border-radius:9px;margin-bottom:6px;background:var(--p2)}
+.agent .nm{font-weight:700;font-size:12px}.agent .ds{font-size:10px;color:var(--m)}
+.agent canvas{width:70px;height:26px;margin-left:auto}
+.agent .sc{font:600 12px "IBM Plex Mono",monospace;width:48px;text-align:right}
+#reactorWrap{position:relative;height:440px;border-radius:10px;overflow:hidden;background:radial-gradient(ellipse at center,#14110a 0%,#07080b 70%)}
+#reactor{position:absolute;inset:0;width:100%;height:100%}
+.node{position:absolute;transform:translate(-50%,-50%);background:#0b0d12ee;border:1px solid var(--b);border-radius:10px;padding:5px 9px;display:flex;gap:7px;align-items:center;font-size:11px;white-space:nowrap;box-shadow:0 0 18px #0008}
+.node .ic{width:22px;height:22px;font-size:10px}
+.node b{font:600 11px "IBM Plex Mono",monospace}
+.core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.core .dec{font:800 30px "IBM Plex Mono",monospace;letter-spacing:2px;text-shadow:0 0 20px currentColor;margin-top:150px}
+.rhead{position:absolute;top:8px;left:10px;right:10px;display:flex;justify-content:space-between;gap:6px;z-index:2;font-size:11px;flex-wrap:wrap}
+.rhead .box{background:#0b0d12cc;border:1px solid var(--b);border-radius:8px;padding:4px 8px}
+.rhead .box span{color:var(--m);font-size:9px;display:block}
+.bigsig{font:800 34px "IBM Plex Mono",monospace;text-align:center;padding:8px;border-radius:10px;border:1px solid var(--b);letter-spacing:3px}
+.bar{height:8px;border-radius:4px;background:#1a1e27;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--g),var(--up))}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12px}.kv span{color:var(--m)}.kv b{font:600 12px "IBM Plex Mono",monospace;text-align:right}
+.sel{display:flex;gap:4px;flex-wrap:wrap}
+.sel button,button.b{background:var(--p2);border:1px solid var(--b);color:var(--t);border-radius:7px;padding:3px 9px;font:600 11px "IBM Plex Mono",monospace;cursor:pointer}
+.sel button.on{background:var(--g);color:#000;border-color:var(--g)}
+input,select{background:#07080b;border:1px solid var(--b);color:var(--t);border-radius:7px;padding:5px 7px;font:600 13px "IBM Plex Mono",monospace;width:100%}
+label{font-size:11px;color:var(--m);display:block;margin:6px 0 2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.out{background:var(--p2);border:1px solid var(--b);border-radius:9px;padding:7px;margin-top:6px}
+.out .big{font:800 26px "IBM Plex Mono",monospace;color:var(--g)}
+#chart{height:400px}
+.ladder{font:11px "IBM Plex Mono",monospace}.ladder div{display:flex;justify-content:space-between;position:relative;padding:1px 4px}
+.ladder div i{position:absolute;top:0;bottom:0;right:0;opacity:.18}
+.ladder .mid{font-weight:700;color:var(--g);justify-content:center;border-top:1px solid var(--b);border-bottom:1px solid var(--b);margin:3px 0}
+.tape{font:11px "IBM Plex Mono",monospace;max-height:240px;overflow:hidden}.tape div{display:flex;justify-content:space-between;padding:1px 0}
+.article h2{font-size:17px;margin:0 0 6px;color:var(--g2)}
+.article h3{font-size:13px;margin:10px 0 4px;color:var(--g)}
+.article p{margin:2px 0;font-size:13px;color:#d6d3ca}
+.article .verdict{font-size:15px;font-weight:800;padding:8px 10px;border-radius:9px;border:1px solid var(--b);margin:6px 0;background:var(--p2)}
+table{width:100%;border-collapse:collapse;font:11px "IBM Plex Mono",monospace}th,td{padding:3px 4px;border-bottom:1px solid #161a22;text-align:right;white-space:nowrap}th{color:var(--m);font-weight:400}th:first-child,td:first-child{text-align:left}
+.tblwrap{max-height:260px;overflow:auto}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}.stats div{background:var(--p2);border:1px solid var(--b);border-radius:8px;padding:5px 7px}.stats span{font-size:10px;color:var(--m);display:block}.stats b{font:700 15px "IBM Plex Mono",monospace}
+.trace{font:11px "IBM Plex Mono",monospace;max-height:300px;overflow:auto}.trace div{padding:3px 0;border-bottom:1px solid #141820;display:flex;gap:8px}
+canvas.fill{width:100%;display:block}
+footer{border-top:1px solid var(--b);background:#08090d;font:11px "IBM Plex Mono",monospace;display:flex;gap:16px;padding:6px 12px;flex-wrap:wrap;color:var(--m)}
+.disc{font-size:11px;color:var(--m);padding:6px 12px;text-align:center}
+.warnbox{border:1px dashed var(--or);color:var(--or);border-radius:8px;padding:5px 8px;font-size:11px;margin-top:6px}
+@media(max-width:1200px){.row1{grid-template-columns:220px 1fr}.row1>.ctl{grid-column:1/-1}.row2{grid-template-columns:1fr}.row4{grid-template-columns:1fr 1fr}.row4>:last-child{grid-column:1/-1}.tiles{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:760px){.row1,.row3,.row4{grid-template-columns:1fr}.row4>:last-child{grid-column:auto}.tiles{grid-template-columns:repeat(2,1fr)}#reactorWrap{height:380px}.node{font-size:9px;padding:3px 5px}.node .ic{display:none}.hstat.hm{display:none}#chart{height:320px}.stats{grid-template-columns:repeat(2,1fr)}header{gap:8px}.clock{font-size:16px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><i></i><div><b>Pure</b>Gold<small>XAU/USD · AI ANALYSIS DESK</small></div></div>
+  <div class="hstat"><span>XAU (ปรับแล้ว)</span><b id="hPx">—</b></div>
+  <div class="hstat"><span>PAXG/USDT</span><b id="hPaxg">—</b></div>
+  <div class="hstat hm"><span>XAU spot (gold-api)</span><b id="hSpot">—</b></div>
+  <div class="hstat hm"><span>ส่วนต่าง basis</span><b id="hBasis">—</b></div>
+  <div class="hstat"><span>24h %</span><b id="h24">—</b></div>
+  <div class="hstat hm"><span>24h High / Low</span><b id="hHL" style="font-size:12px">—</b></div>
+  <div class="grow"></div>
+  <div><div class="clock" id="clkB">--:--:--</div><small class="mu mono" id="clkU">UTC --:--:--</small></div>
+  <span class="pill"><i class="dot" id="dWs"></i><span id="sWs">LIVE FEED</span></span>
+  <span class="pill"><i class="dot" id="dAi"></i><span id="sAi">AI ENGINE</span></span>
+  <span class="pill"><i class="dot" id="dMk"></i><span id="sMk">ตลาด</span></span>
+</header>
+<div class="strip"><div class="tag">LIVE TAPE</div><div style="overflow:hidden;flex:1"><div class="run" id="strip"><span>กำลังเชื่อมต่อข้อมูลสด…</span></div></div></div>
+<div class="tiles" id="tiles"></div>
+<main>
+<section class="row1">
+  <div class="panel"><div class="ph"><b>AGENTS · ตัวชี้วัด</b><span>score −1…+1 (M15 spark)</span></div><div id="agentList"></div>
+   <div class="mu" style="font-size:10px">คะแนนรวมถ่วงน้ำหนักจาก M5 20% · M15 30% · H1 30% · H4 20%</div></div>
+  <div class="panel" style="padding:0"><div id="reactorWrap"><canvas id="reactor"></canvas>
+    <div class="rhead"><div class="box"><span>THE REACTOR · คะแนนรวม</span><b class="mono" id="rScore">—</b></div><div class="box"><span>ความมั่นใจ</span><b class="mono" id="rConf">—</b></div><div class="box"><span>อัปเดต AI ล่าสุด (UTC+7)</span><b class="mono" id="rLast">—</b></div><div class="box"><span>รีเฟรชใน</span><b class="mono gd" id="rCd">—</b></div></div>
+    <div id="nodes"></div><div class="core"><div class="dec" id="coreDec">…</div></div></div></div>
+  <div class="panel ctl"><div class="ph"><b>CONTROL STACK · สัญญาณ AI</b><span id="hypo"></span></div>
+    <div class="bigsig" id="bigSig">—</div>
+    <div style="margin:8px 0 3px;display:flex;justify-content:space-between;font-size:11px"><span class="mu">ความมั่นใจ</span><b class="mono" id="cConf">—</b></div><div class="bar"><i id="cBar" style="width:0"></i></div>
+    <div class="kv" style="margin-top:8px">
+      <span>Entry</span><b id="lE">—</b><span>Stop Loss</span><b class="dn" id="lSL">—</b><span>TP1 (RR 1:1.5)</span><b class="up" id="lT1">—</b><span>TP2 (RR 1:2.5)</span><b class="up" id="lT2">—</b>
+      <span>ระยะ SL</span><b id="lD">—</b><span>ATR M15</span><b id="lA">—</b><span>แนวต้านใกล้สุด</span><b class="dn" id="lR">—</b><span>แนวรับใกล้สุด</span><b class="up" id="lS">—</b>
+    </div>
+    <label>ความถี่รีเฟรชผลวิเคราะห์ AI</label><div class="sel" id="ivSel"></div>
+    <div class="mu" style="font-size:10px;margin-top:6px">เครื่องยนต์วิเคราะห์รันในเบราว์เซอร์ของคุณจากข้อมูลจริงตามรอบที่เลือก · ราคา/กราฟสดแบบ real-time · ระดับราคาเป็น XAU spot-adjusted</div>
+  </div>
+</section>
+
+<section class="row2">
+  <div class="panel"><div class="ph"><b>คำนวณล็อต · Exness XAUUSDc</b><span>Standard Cent (MT5)</span></div>
+    <div class="grid2"><div><label>Balance (USC)</label><input id="cBal" type="number" value="10000" min="0"></div><div><label>ความเสี่ยง %</label><input id="cRisk" type="number" value="1" step="0.1" min="0.1"></div></div>
+    <div class="grid2"><div><label>SL</label><select id="cMode"><option value="ai">ใช้ SL จาก AI</option><option value="man">กำหนดเอง ($)</option></select></div><div><label>ระยะ SL ($ ราคาทอง)</label><input id="cSL" type="number" value="10" step="0.1"></div></div>
+    <div class="grid2"><div><label>Leverage (ประมาณการ margin)</label><select id="cLev"><option>100</option><option>200</option><option selected>500</option><option>1000</option><option>2000</option></select></div><div><label>≈ USD</label><input id="cBalUsd" disabled></div></div>
+    <div class="out"><div class="mu" style="font-size:11px">ขนาดล็อตแนะนำ (XAUUSDc)</div><div class="big" id="oLot">—</div>
+     <div class="kv" id="oKv"></div><div id="oWarn"></div></div>
+    <div class="mu" style="font-size:10px;margin-top:6px">สเปก: 1 lot XAUUSDc = 1 oz (cent lot = 0.01 standard lot, standard = 100 oz) · ราคาขยับ $1 ต่อ 1.00 lot = 1 USD = 100 USC · min 0.01 · step 0.01 · max 200 · 100 USC = 1 USD. ที่มา: Exness Help Center. ไม่รวม spread/swap</div>
+  </div>
+  <div class="panel"><div class="ph"><b>THE TAPE · กราฟ <span id="chMode">XAU (PAXG+basis)</span></b>
+     <div class="sel" id="tfSel"></div><div class="sel"><button id="pxToggle">แสดง PAXG ดิบ</button></div></div>
+     <div id="chart"></div>
+     <div class="mu" style="font-size:10px;margin-top:4px">EMA20 <span class="gd">—</span> EMA50 <span style="color:var(--cy)">—</span> · เส้นประ = Entry/SL/TP จาก AI · ข้อมูล Binance PAXGUSDT (โทเคนทองคำ 1 PAXG = 1 oz) เป็น proxy ของ XAU</div></div>
+  <div class="panel"><div class="ph"><b>ORDER BOOK</b><span>PAXG จริง</span></div><div class="ladder" id="ladder"></div>
+     <div class="ph" style="margin-top:8px"><b>TRADES ล่าสุด</b><span id="tps"></span></div><div class="tape" id="tape"></div></div>
+</section>
+
+<section class="row3">
+  <div class="panel article"><div class="ph"><b>บทวิเคราะห์ · AI ARTICLE</b><span id="artT">สร้างใหม่ทุกรอบการวิเคราะห์</span></div><div id="article">กำลังโหลด…</div></div>
+  <div class="panel"><div class="ph"><b>ผลงานสัญญาณ AI · TRACK RECORD</b><span id="trUpd">บันทึกจริง · อัปเดตราว ๆ ทุก 5 นาที</span></div>
+    <div class="grid2" style="margin-bottom:6px"><div><label>คำนวณกำไร/ขาดทุนที่ล็อต (XAUUSDc)</label><input id="trLot" type="number" value="0.10" step="0.01" min="0.01"></div><div><label>นับตั้งแต่</label><input id="trSince" disabled></div></div>
+    <div class="stats" id="trStats"></div>
+    <canvas class="fill" id="eqc" height="120"></canvas>
+    <div class="tblwrap"><table><thead><tr><th>เวลา (UTC+7)</th><th>ฝั่ง</th><th>Entry</th><th>SL</th><th>TP</th><th>สถานะ</th><th>P/L $/oz</th><th>USC</th></tr></thead><tbody id="trBody"></tbody></table></div>
+    <div class="mu" style="font-size:10px;margin-top:6px">นี่คือผลของสัญญาณที่ AI ออกเอง (คิดจากราคา PAXG จริงหลังออกสัญญาณ: แตะ TP1 = ชนะ, แตะ SL = แพ้; ถ้าแตะทั้งคู่ในแท่งเดียวกันนับเป็น SL; กลับทิศ = ปิดที่ราคาตลาด; เกิน 24 ชม. = หมดอายุ) — <b>ไม่ใช่ยอดเงินในบัญชี Exness ของคุณ</b> · ไม่รวม spread/swap · ไม่ออกสัญญาณช่วงตลาดทองปิด (เสาร์–อาทิตย์)</div>
+  </div>
+</section>
+
+<section class="row4">
+  <div class="panel"><div class="ph"><b>THE TRACE · บันทึกการตัดสินใจ</b><span>บันทึกจาก job ประจำ (~ทุก 5 นาที)</span></div><div class="trace" id="trace"></div></div>
+  <div class="panel"><div class="ph"><b>THE PRICER · การกระจายราคา</b><span id="prH">อีก 12 แท่ง</span></div><canvas class="fill" id="dist" height="170"></canvas><div class="kv" id="prKv" style="margin-top:6px"></div>
+    <div class="mu" style="font-size:10px;margin-top:4px">สถิติจากแท่งเทียนจริงในกราฟ (bootstrap 1,000 เส้นทาง) — ไม่ใช่การันตีผลลัพธ์</div></div>
+  <div class="panel"><div class="ph"><b>SIGNAL SPECTROGRAM</b><span>ตัวชี้วัด × กรอบเวลา · 60 แท่งล่าสุด</span></div><canvas class="fill" id="spec" height="300"></canvas></div>
+</section>
+</main>
+<div class="disc">⚠️ PureGold เป็นเครื่องมือวิเคราะห์ด้วยอัลกอริทึม (rule-based: EMA, RSI, MACD, Bollinger, ATR, order-flow, แนวรับ/ต้าน) ไม่ใช่ LLM และไม่ใช่คำแนะนำการลงทุน · ไม่มีการส่งคำสั่งซื้อขาย · ราคา PAXG/spot อาจต่างจาก XAUUSDc ของ Exness เล็กน้อย</div>
+<footer><span id="fWs">WS: —</span><span id="fRate">msg/s: —</span><span id="fLat">latency: —</span><span id="fAi">AI: —</span><span id="fSrc">source: Binance PAXGUSDT + gold-api.com XAU</span></footer>
+
+<script>
+const $=id=>document.getElementById(id);
+const fmt=(x,d=2)=>x==null||isNaN(x)?'—':Number(x).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const sgn=(x,d=2)=>x==null?'—':(x>=0?'+':'')+fmt(x,d);
+const bkk=ms=>new Date(ms).toLocaleTimeString('en-GB',{timeZone:'Asia/Bangkok'});
+const bkkD=ms=>new Date(ms).toLocaleString('en-GB',{timeZone:'Asia/Bangkok',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+const REST=['https://api.binance.com','https://data-api.binance.vision'];
+const WSH=['wss://stream.binance.com:443','wss://stream.binance.com:9443','wss://data-stream.binance.vision'];
+const AG={trend:['T','#f5c542'],momentum:['M','#ff9f43'],macd:['D','#3fd0ff'],band:['B','#b26bff'],flow:['F','#22e39b'],levels:['L','#ff6bd5'],risk:['R','#ff4d6d']};
+let S={tf:localStorage.pgTf||'15m',iv:+(localStorage.pgIv||5),adj:localStorage.pgAdj!=='0',an:null,sig:null,basis:0,last:null,candles:[],book:null,trades:[],msgs:0,lat:null,nextFetch:0,spot:null,t24:null};
+
+async function rest(path){let e;for(const h of REST){try{const r=await fetch(h+path);if(r.ok)return await r.json();e=new Error(r.status)}catch(x){e=x}}throw e}
+const B=()=>S.adj?S.basis:0;
+
+// ---------- clock ----------
+setInterval(()=>{const d=new Date();$('clkB').innerHTML=d.toLocaleTimeString('en-GB',{timeZone:'Asia/Bangkok'})+' <small style="display:inline;font-size:10px">BKK UTC+7</small>';$('clkU').textContent='UTC '+d.toISOString().slice(11,19);
+ const cd=Math.max(0,S.nextFetch-Date.now());$('rCd').textContent=Math.floor(cd/60000)+':'+String(Math.floor(cd/1000)%60).padStart(2,'0');
+ if(Date.now()>=S.nextFetch)loadAI();},1000);
+
+// ---------- chart ----------
+const chart=LightweightCharts.createChart($('chart'),{layout:{background:{color:'#0d0f14'},textColor:'#8a8f9c',fontFamily:'IBM Plex Mono'},grid:{vertLines:{color:'#151922'},horzLines:{color:'#151922'}},rightPriceScale:{borderColor:'#1d222c'},timeScale:{borderColor:'#1d222c',timeVisible:true,secondsVisible:false},crosshair:{mode:0},localization:{timeFormatter:t=>new Date(t*1000).toLocaleString('en-GB',{timeZone:'Asia/Bangkok',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}});
+const cs=chart.addCandlestickSeries({upColor:'#22e39b',downColor:'#ff4d6d',borderVisible:false,wickUpColor:'#22e39b',wickDownColor:'#ff4d6d'});
+const vs=chart.addHistogramSeries({priceScaleId:'v',priceFormat:{type:'volume'}});chart.priceScale('v').applyOptions({scaleMargins:{top:.82,bottom:0}});
+const e20s=chart.addLineSeries({color:'#f5c542',lineWidth:1,priceLineVisible:false,lastValueVisible:false});
+const e50s=chart.addLineSeries({color:'#3fd0ff',lineWidth:1,priceLineVisible:false,lastValueVisible:false});
+new ResizeObserver(()=>chart.applyOptions({width:$('chart').clientWidth,height:$('chart').clientHeight})).observe($('chart'));
+let plines=[];
+function emaArr(a,n){const k=2/(n+1);let e=null;return a.map((x,i)=>(e=e==null?x:x*k+e*(1-k),i>=n-1?e:null))}
+function drawSeries(){const b=B(),c=S.candles;
+ cs.setData(c.map(x=>({time:x.t/1000,open:x.o+b,high:x.h+b,low:x.l+b,close:x.c+b})));
+ vs.setData(c.map(x=>({time:x.t/1000,value:x.v,color:x.c>=x.o?'#22e39b44':'#ff4d6d44'})));
+ const cl=c.map(x=>x.c+b);const a=emaArr(cl,20),d=emaArr(cl,50);
+ e20s.setData(c.map((x,i)=>a[i]==null?null:{time:x.t/1000,value:a[i]}).filter(Boolean));
+ e50s.setData(c.map((x,i)=>d[i]==null?null:{time:x.t/1000,value:d[i]}).filter(Boolean));drawLines();}
+function drawLines(){plines.forEach(p=>cs.removePriceLine(p));plines=[];if(!S.an)return;const L=S.an.levels,off=S.adj?0:-S.an.basis;
+ [['Entry',L.entry,'#f5c542'],['SL',L.sl,'#ff4d6d'],['TP1',L.tp1,'#22e39b'],['TP2',L.tp2,'#22e39b']].forEach(([t,p,c])=>plines.push(cs.createPriceLine({price:p+off,color:c,lineWidth:1,lineStyle:2,axisLabelVisible:true,title:(L.hypothetical?'(สมมติ) ':'')+t})));}
+async function loadCandles(){const r=await rest(`/api/v3/klines?symbol=PAXGUSDT&interval=${S.tf}&limit=500`);
+ S.candles=r.map(k=>({t:k[0],o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[5]}));drawSeries();chart.timeScale().scrollToRealTime();pricer();}
+function onKline(k){const x={t:k.t,o:+k.o,h:+k.h,l:+k.l,c:+k.c,v:+k.v};const c=S.candles;if(!c.length)return;
+ const last=c[c.length-1];if(x.t===last.t)c[c.length-1]=x;else if(x.t>last.t){c.push(x);if(c.length>800)c.shift();pricer();}else return;
+ const b=B();cs.update({time:x.t/1000,open:x.o+b,high:x.h+b,low:x.l+b,close:x.c+b});vs.update({time:x.t/1000,value:x.v,color:x.c>=x.o?'#22e39b44':'#ff4d6d44'});}
+
+// ---------- websocket ----------
+let ws,wsHost=0,wsTimer,lastMsg=0,retry=0;
+function connect(){try{ws&&ws.close()}catch(e){}
+ const st=`paxgusdt@kline_${S.tf}/paxgusdt@aggTrade/paxgusdt@depth20@1000ms/paxgusdt@ticker`;
+ setWs('warn','CONNECTING');ws=new WebSocket(`${WSH[wsHost]}/stream?streams=${st}`);
+ const myws=ws;const ot=setTimeout(()=>{if(myws.readyState===0)myws.close()},8000);ws.onopen=()=>{clearTimeout(ot);retry=0;setWs('on','LIVE')};
+ ws.onmessage=e=>{lastMsg=Date.now();S.msgs++;const m=JSON.parse(e.data),d=m.data;
+  if(m.stream.includes('@kline'))onKline(d.k);
+  else if(m.stream.includes('@aggTrade'))onTrade(d);
+  else if(m.stream.includes('@depth'))S.book=d;
+  else if(m.stream.includes('@ticker'))S.t24={chg:+d.P,h:+d.h,l:+d.l,last:+d.c};};
+ ws.onclose=()=>{setWs('off','RECONNECTING');clearTimeout(wsTimer);retry++;wsHost=(wsHost+1)%WSH.length;wsTimer=setTimeout(connect,Math.min(15000,1000*2**Math.min(retry,4)))};
+ ws.onerror=()=>{try{ws.close()}catch(e){}};}
+setInterval(()=>{if(ws&&ws.readyState===1&&Date.now()-lastMsg>25000){setWs('off','STALE');ws.close()}},5000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(!ws||ws.readyState>1))connect()});
+function setWs(c,t){$('dWs').className='dot '+c;$('sWs').textContent='FEED '+t;$('fWs').textContent='WS: '+t+' ('+WSH[wsHost].replace('wss://','')+')'}
+function onTrade(d){const t={p:+d.p,q:+d.q,s:d.m?'S':'B',T:d.T};S.last=t.p;S.lat=Date.now()-d.E;S.trades.unshift(t);if(S.trades.length>60)S.trades.pop();}
+let mc=0;setInterval(()=>{$('fRate').textContent='msg/s: '+(S.msgs-mc);mc=S.msgs;$('fLat').textContent='latency: '+(S.lat==null?'—':S.lat+' ms')},1000);
+
+// ---------- render live ----------
+function renderLive(){const b=S.basis;const p=S.last??(S.candles.length?S.candles.at(-1).c:null);if(p==null)return;
+ $('hPx').textContent=fmt(p+b);$('hPaxg').textContent=fmt(p);$('hSpot').textContent=S.spot?fmt(S.spot):'—';$('hBasis').textContent=sgn(b);
+ if(S.t24){$('h24').innerHTML=`<span class="${S.t24.chg>=0?'up':'dn'}">${sgn(S.t24.chg)}%</span>`;$('hHL').textContent=fmt(S.t24.h+b)+' / '+fmt(S.t24.l+b)}
+ if(S.book){const bb=S.book.bids.slice(0,10),aa=S.book.asks.slice(0,10).reverse(),mx=Math.max(...bb.concat(aa).map(x=>+x[1]));const ob=B();
+  const row=(x,c)=>`<div><span class="${c}">${fmt(+x[0]+ob)}</span><span>${(+x[1]).toFixed(3)}</span><i style="width:${(+x[1])/mx*100}%;background:var(--${c})"></i></div>`;
+  const bv=bb.reduce((s,x)=>s+ +x[1],0),av=aa.reduce((s,x)=>s+ +x[1],0);
+  $('ladder').innerHTML=aa.map(x=>row(x,'dn')).join('')+`<div class="mid">${fmt(p+ob)} · spread ${(+S.book.asks[0][0]-+S.book.bids[0][0]).toFixed(2)} · bid ${(bv/(bv+av)*100).toFixed(0)}%</div>`+bb.map(x=>row(x,'up')).join('');}
+ const ob=B();$('tape').innerHTML=S.trades.slice(0,16).map(t=>`<div><span class="mu">${bkk(t.T)}</span><span class="${t.s=='B'?'up':'dn'}">${fmt(t.p+ob)}</span><span>${t.q.toFixed(4)}</span></div>`).join('');
+ const now=Date.now(),rc=S.trades.filter(t=>now-t.T<60000);$('tps').textContent=rc.length+' trades/นาที';
+ $('strip').innerHTML=S.trades.slice(0,25).map(t=>`<span class="${t.s=='B'?'up':'dn'}">${t.s=='B'?'▲ BUY':'▼ SELL'} ${t.q.toFixed(4)} PAXG @ ${fmt(t.p)}</span>`).join('')+(S.an?`<span class="gd">AI: ${S.an.decision} ${S.an.confidence}%</span>`:'');
+ calc();}
+setInterval(renderLive,1000);
+async function spotLoop(){try{const r=await fetch('https://api.gold-api.com/price/XAU');const j=await r.json();S.spot=+j.price;const p=S.last??S.candles.at(-1)?.c;if(p){const nb=S.spot-p;const ch=Math.abs(nb-S.basis)>0.5;S.basis=+nb.toFixed(2);if(ch&&S.adj)drawSeries()}}catch(e){}}
+setInterval(spotLoop,30000);
+
+// ---------- AI ----------
+const RAW='https://raw.githubusercontent.com/purefxaidev/puregold/main/data/';
+async function repoJson(f){for(const u of [RAW+f+'?t='+Date.now(),'./data/'+f+'?t='+Date.now()]){try{const r=await fetch(u,{cache:'no-store'});if(r.ok)return await r.json()}catch(e){}}return null}
+let aiBusy=false;
+async function loadAI(){if(aiBusy)return;aiBusy=true;S.nextFetch=Date.now()+S.iv*60000;$('dAi').className='dot warn';
+ try{const [a,sig,hist,meta]=await Promise.all([PGEngine.analyze(),repoJson('signals.json'),repoJson('history.json'),repoJson('meta.json')]);
+  S.an=a;S.sig={signals:sig||[],history:(hist||[]).slice(-120),meta};if(!S.spot&&a.spot){S.spot=a.spot;S.basis=a.basis;if(S.adj)drawSeries();}
+  $('dAi').className='dot on';$('sAi').textContent='AI '+bkk(a.t);renderAI();renderTrack();}
+ catch(e){console.warn('analysis',e);$('dAi').className='dot off';$('sAi').textContent='AI ERROR';$('fAi').textContent='AI: '+e.message;S.nextFetch=Date.now()+15000}
+ aiBusy=false}
+const col=s=>s==='BUY'?'var(--up)':s==='SELL'?'var(--dn)':s==='HIGH'?'var(--dn)':s==='ELEVATED'?'var(--or)':'var(--m)';
+function renderAI(){const a=S.an,L=a.levels;
+ $('dMk').className='dot '+(a.market_open?'on':'warn');$('sMk').textContent=a.market_open?'ตลาดทองเปิด':'ตลาดทองปิด (PAXG ยังเทรด)';
+ $('tiles').innerHTML=a.agents.map(g=>`<div class="tile"><div class="ic" style="background:${AG[g.key][1]}">${AG[g.key][0]}</div><div><div class="n">${g.name} · ${g.th}</div><div class="v" style="color:${col(g.signal)}">${g.signal} <span class="mu">${g.key==='risk'?'×'+g.ratio:sgn(g.score)}</span></div></div></div>`).join('');
+ $('agentList').innerHTML=a.agents.map((g,i)=>`<div class="agent"><div class="ic" style="background:${AG[g.key][1]}">${AG[g.key][0]}</div><div><div class="nm">${g.name}</div><div class="ds">${g.th}</div></div><canvas id="sp${i}" width="140" height="52"></canvas><div class="sc" style="color:${col(g.signal)}">${g.key==='risk'?g.signal.slice(0,4):sgn(g.score)}</div></div>`).join('');
+ a.agents.forEach((g,i)=>spark($('sp'+i),g.series||[],AG[g.key][1]));
+ const dc=col(a.decision);$('bigSig').textContent=a.decision;$('bigSig').style.color=dc;$('bigSig').style.boxShadow=`inset 0 0 30px ${a.decision==='WAIT'?'#0000':dc}33`;
+ $('coreDec').textContent=a.decision;$('coreDec').style.color=dc;
+ $('cConf').textContent=a.confidence+'%';$('cBar').style.width=a.confidence+'%';$('rConf').textContent=a.confidence+'%';$('rScore').textContent=sgn(a.score,3);$('rLast').textContent=bkk(a.t);
+ $('hypo').textContent=L.hypothetical?'WAIT: แสดงระดับ (สมมติ) ฝั่ง '+L.side:'';
+ $('lE').textContent=fmt(L.entry);$('lSL').textContent=fmt(L.sl);$('lT1').textContent=fmt(L.tp1);$('lT2').textContent=fmt(L.tp2);$('lD').textContent='$'+fmt(L.sl_dist);$('lA').textContent='$'+fmt(L.atr15);
+ $('lR').textContent=a.sr.res[0]?fmt(a.sr.res[0].p):'—';$('lS').textContent=a.sr.sup[0]?fmt(a.sr.sup[0].p):'—';
+ $('fAi').textContent='AI (ในเบราว์เซอร์): '+a.decision+' '+a.confidence+'% @ '+bkk(a.t)+' UTC+7';
+ // nodes
+ const ns=a.agents;$('nodes').innerHTML=ns.map((g,i)=>{const an=-Math.PI/2+i/ns.length*Math.PI*2;const x=50+Math.cos(an)*38,y=54+Math.sin(an)*36;
+  return `<div class="node" style="left:${x}%;top:${y}%;border-color:${AG[g.key][1]}66"><div class="ic" style="background:${AG[g.key][1]}">${AG[g.key][0]}</div><div>${g.name}<br><b style="color:${col(g.signal)}">${g.signal} ${g.key==='risk'?'':sgn(g.score)}</b></div></div>`}).join('');
+ // article
+ const ar=a.article;$('article').innerHTML=`<h2>${ar.title}</h2><div class="verdict" style="color:${dc}">${ar.verdict}</div>`+(a.market_open?'':'<div class="warnbox">ขณะนี้ตลาดทอง spot ปิด (สุดสัปดาห์) — PAXG ยังซื้อขายบน Binance ระบบจะไม่ออกสัญญาณใหม่</div>')+ar.sections.map(s=>`<h3>${s.h}</h3>`+s.p.map(p=>`<p>• ${p}</p>`).join('')).join('');
+ $('artT').textContent='อัปเดต '+bkkD(a.t)+' (UTC+7)';
+ // trace
+ const h=[{t:a.t,d:a.decision,c:a.confidence,s:a.score,p:+(a.price+a.basis).toFixed(2),me:1}].concat((S.sig.history||[]).slice().reverse());$('trace').innerHTML=h.map(x=>`<div><span class="mu">${bkkD(x.t)}</span><b style="color:${col(x.d)};width:40px">${x.d}</b><span>${x.c}%</span><span class="mu">score ${sgn(x.s,3)}</span><span>@ ${fmt(x.p)}</span>${x.me?'<span class="gd">(เบราว์เซอร์นี้)</span>':''}</div>`).join('');
+ spectro();drawLines();calc();}
+function spark(c,v,color){if(!c)return;const g=c.getContext('2d'),W=c.width,H=c.height;g.clearRect(0,0,W,H);g.strokeStyle='#2a2f3a';g.beginPath();g.moveTo(0,H/2);g.lineTo(W,H/2);g.stroke();if(v.length<2)return;
+ g.strokeStyle=color;g.lineWidth=2;g.beginPath();v.forEach((y,i)=>{const X=i/(v.length-1)*W,Y=H/2-y*(H/2-3);i?g.lineTo(X,Y):g.moveTo(X,Y)});g.stroke();}
+function spectro(){const c=$('spec'),rows=S.an.spectro;const W=c.width=c.clientWidth*devicePixelRatio,H=c.height=300*devicePixelRatio;const g=c.getContext('2d');g.clearRect(0,0,W,H);
+ const lw=88*devicePixelRatio,rh=H/rows.length,n=60,cw=(W-lw)/n;g.font=`${9*devicePixelRatio}px IBM Plex Mono`;
+ rows.forEach((r,i)=>{g.fillStyle='#8a8f9c';g.fillText(r.name,2,i*rh+rh*0.7);r.values.forEach((v,j)=>{if(v==null)return;const a=Math.min(1,Math.abs(v));g.fillStyle=v>=0?`rgba(34,227,155,${0.1+a*0.9})`:`rgba(255,77,109,${0.1+a*0.9})`;g.fillRect(lw+j*cw+0.5,i*rh+0.5,cw-1,rh-1)})});}
+
+// ---------- reactor ----------
+const rc=$('reactor'),rg=rc.getContext('2d');let RW,RH;
+function rsz(){if(!rc.clientWidth)return;RW=rc.width=rc.clientWidth*devicePixelRatio;RH=rc.height=rc.clientHeight*devicePixelRatio}new ResizeObserver(rsz).observe(rc);rsz();
+const ribbons=Array.from({length:140},(_,i)=>({a:Math.random()*Math.PI*2,len:0.4+Math.random()*1.4,r:0.7+Math.random()*0.5,w:0.5+Math.random()*2.2,h:(i*37)%360,sp:0.3+Math.random(),ph:Math.random()*6}));
+let tt=0,blink=0;
+function frame(){tt+=0.016;if(!RW){rsz();if(!RW){requestAnimationFrame(frame);return}}const d=S.an?.decision,conf=(S.an?.confidence||20)/100;rg.clearRect(0,0,RW,RH);const cx=RW/2,cy=RH*0.54,R=Math.min(RW,RH)*0.3;
+ rg.globalCompositeOperation='lighter';
+ ribbons.forEach(b=>{const rot=tt*b.sp*(0.25+conf*0.9)*(d==='SELL'?-1:1);const a0=b.a+rot;const hue=d==='BUY'?(b.h%120)+60:d==='SELL'?((b.h%80)+330)%360:b.h;
+  rg.strokeStyle=`hsla(${hue},95%,60%,${0.18+conf*0.25})`;rg.lineWidth=b.w*devicePixelRatio;rg.beginPath();
+  for(let k=0;k<=24;k++){const a=a0+b.len*k/24;const wob=1+0.08*Math.sin(a*3+tt*1.3+b.ph);const rr=R*b.r*wob;const x=cx+Math.cos(a)*rr*1.35,y=cy+Math.sin(a)*rr*0.8;k?rg.lineTo(x,y):rg.moveTo(x,y)}rg.stroke();});
+ rg.globalCompositeOperation='source-over';
+ // links
+ const n=S.an?.agents.length||0;for(let i=0;i<n;i++){const an=-Math.PI/2+i/n*Math.PI*2;const x=RW*(0.5+Math.cos(an)*0.38),y=RH*(0.54+Math.sin(an)*0.36);const g=S.an.agents[i];
+  rg.strokeStyle=(AG[g.key][1])+'55';rg.setLineDash([4,6]);rg.lineDashOffset=-tt*30;rg.lineWidth=1*devicePixelRatio;rg.beginPath();rg.moveTo(x,y);rg.lineTo(cx,cy);rg.stroke();rg.setLineDash([])}
+ // core orb
+ const cr=R*0.42*(1+0.03*Math.sin(tt*2));const gc=d==='BUY'?'34,227,155':d==='SELL'?'255,77,109':'245,197,66';
+ const gl=rg.createRadialGradient(cx,cy,cr*0.5,cx,cy,cr*2.2);gl.addColorStop(0,`rgba(${gc},.35)`);gl.addColorStop(1,'rgba(0,0,0,0)');rg.fillStyle=gl;rg.beginPath();rg.arc(cx,cy,cr*2.2,0,7);rg.fill();
+ const og=rg.createRadialGradient(cx-cr*0.35,cy-cr*0.4,cr*0.1,cx,cy,cr);og.addColorStop(0,'#fff8dc');og.addColorStop(0.5,'#f5c542');og.addColorStop(1,'#7a5508');rg.fillStyle=og;rg.beginPath();rg.arc(cx,cy,cr,0,7);rg.fill();
+ blink=(tt%4<0.12)?0.15:1;rg.fillStyle='#14100a';[-1,1].forEach(s=>{rg.beginPath();rg.ellipse(cx+s*cr*0.28,cy-cr*0.05,cr*0.09,cr*0.2*blink,0,0,7);rg.fill()});
+ requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+// ---------- calculator (Exness XAUUSDc) ----------
+const SPEC={oz:1,usdPerDollarPerLot:1,uscPerUsd:100,min:0.01,step:0.01,max:200};
+['cBal','cRisk','cMode','cSL','cLev'].forEach(i=>{const e=$(i);e.value=localStorage['pg_'+i]??e.value;e.addEventListener('input',()=>{localStorage['pg_'+i]=e.value;calc()})});
+function calc(){const bal=+$('cBal').value||0,risk=+$('cRisk').value||0,lev=+$('cLev').value;$('cBalUsd').value='$'+fmt(bal/100);
+ const ai=$('cMode').value==='ai'&&S.an;if(ai)$('cSL').value=S.an.levels.sl_dist;$('cSL').disabled=!!ai;
+ const sl=+$('cSL').value||0;if(!sl){$('oLot').textContent='—';return}
+ const riskUSC=bal*risk/100,uscPerLot=sl*SPEC.usdPerDollarPerLot*SPEC.uscPerUsd;let lot=Math.floor(riskUSC/uscPerLot/SPEC.step+1e-9)*SPEC.step;let warn='';
+ if(lot<SPEC.min){lot=SPEC.min;warn=`<div class="warnbox">ทุน/ความเสี่ยงนี้ต่ำกว่าล็อตขั้นต่ำ 0.01 — ที่ 0.01 lot จะเสี่ยงจริง ${fmt(lot*uscPerLot)} USC (${fmt(lot*uscPerLot/bal*100)}%)</div>`}
+ if(lot>SPEC.max)lot=SPEC.max;
+ const rUSC=lot*uscPerLot,v1=lot*SPEC.usdPerDollarPerLot*SPEC.uscPerUsd,p=(S.last??S.an?.price??0)+S.basis,mUSD=p*lot*SPEC.oz/lev;
+ const tp1=S.an?sl*1.5:null,tp2=S.an?sl*2.5:null;
+ const u=x=>`${fmt(x)} USC <span class="mu">($${fmt(x/100)})</span>`;
+ $('oLot').textContent=lot.toFixed(2)+' lot';
+ $('oKv').innerHTML=`<span>ความเสี่ยงที่ SL</span><b class="dn">${u(rUSC)}</b><span>มูลค่าต่อราคาขยับ $1</span><b>${u(v1)}</b><span>กำไรที่ TP1 (RR 1.5)</span><b class="up">${u(rUSC*1.5)}</b><span>กำไรที่ TP2 (RR 2.5)</span><b class="up">${u(rUSC*2.5)}</b><span>Margin โดยประมาณ 1:${lev}</span><b>${u(mUSD*100)}</b><span>ขนาดสัญญา</span><b>${fmt(lot*SPEC.oz,2)} oz</b>`;
+ $('oWarn').innerHTML=warn;}
+
+// ---------- track record ----------
+$('trLot').value=localStorage.pgTrLot||'0.10';$('trLot').addEventListener('input',()=>{localStorage.pgTrLot=$('trLot').value;renderTrack()});
+function renderTrack(){if(!S.sig)return;const lot=+$('trLot').value||0.01,sg=S.sig.signals||[];const usd=x=>x*lot*SPEC.usdPerDollarPerLot;
+ const closed=sg.filter(s=>s.status!=='OPEN'),wins=closed.filter(s=>s.pnl>0),tp=closed.filter(s=>s.status==='TP').length,sl=closed.filter(s=>s.status==='SL').length;
+ const cum=closed.reduce((a,s)=>a+s.pnl,0),open=sg.filter(s=>s.status==='OPEN');const fl=open.reduce((a,s)=>a+(s.float||0),0);
+ const mt=S.sig.meta;$('trUpd').textContent='บันทึกจริง · อัปเดตราว ๆ ทุก 5 นาที'+(mt?' · ล่าสุด '+bkkD(mt.updated)+' UTC+7':'');$('trSince').value=sg.length?bkkD(sg[0].t)+' UTC+7':'ยังไม่มีสัญญาณ';
+ const st=(k,v,c='')=>`<div><span>${k}</span><b class="${c}">${v}</b></div>`;
+ $('trStats').innerHTML=st('สัญญาณทั้งหมด',sg.length)+st('Win rate (ปิดแล้ว)',closed.length?(wins.length/closed.length*100).toFixed(0)+'%':'—')+st('TP / SL',tp+' / '+sl)+st('เปิดอยู่',open.length)
+  +st('P/L สะสม USD','$'+fmt(usd(cum)),cum>=0?'up':'dn')+st('P/L สะสม USC',fmt(usd(cum)*100),cum>=0?'up':'dn')+st('Floating USD','$'+fmt(usd(fl)),fl>=0?'up':'dn')+st('P/L $/oz','$'+fmt(cum),cum>=0?'up':'dn');
+ $('trBody').innerHTML=sg.length?sg.slice().reverse().slice(0,50).map(s=>{const pl=s.status==='OPEN'?s.float:s.pnl,b=s.basis||0;return `<tr><td>${bkkD(s.t)}</td><td style="color:${col(s.side)}">${s.side}</td><td>${fmt(s.entry+b)}</td><td>${fmt(s.sl+b)}</td><td>${fmt(s.tp+b)}</td><td>${s.status==='OPEN'?'<span class="gd">OPEN</span>':s.status}</td><td class="${pl>=0?'up':'dn'}">${sgn(pl)}</td><td class="${pl>=0?'up':'dn'}">${fmt(usd(pl||0)*100)}</td></tr>`}).join(''):'<tr><td colspan="8" style="text-align:center;padding:14px" class="mu">ยังไม่มีสัญญาณที่ปิดหรือออก — ระบบจะบันทึกเมื่อ AI ออกสัญญาณ BUY/SELL จริง</td></tr>';
+ const c=$('eqc'),W=c.width=c.clientWidth*devicePixelRatio,H=c.height=120*devicePixelRatio,g=c.getContext('2d');g.clearRect(0,0,W,H);
+ let e=0;const pts=[0,...closed.sort((a,b)=>a.exit_t-b.exit_t).map(s=>e+=usd(s.pnl))];g.fillStyle='#8a8f9c';g.font=`${10*devicePixelRatio}px IBM Plex Mono`;
+ if(pts.length<2){g.fillText('Equity curve ของสัญญาณ (USD) จะแสดงเมื่อมีสัญญาณปิดแล้ว',10,H/2);return}
+ const mn=Math.min(...pts),mx=Math.max(...pts),y=v=>H-8-(v-mn)/((mx-mn)||1)*(H-16);g.strokeStyle='#2a2f3a';g.beginPath();g.moveTo(0,y(0));g.lineTo(W,y(0));g.stroke();
+ g.strokeStyle=e>=0?'#22e39b':'#ff4d6d';g.lineWidth=2*devicePixelRatio;g.beginPath();pts.forEach((v,i)=>{const X=i/(pts.length-1)*W;i?g.lineTo(X,y(v)):g.moveTo(X,y(v))});g.stroke();g.fillText('$'+fmt(e),6,14*devicePixelRatio);}
+
+// ---------- pricer ----------
+function pricer(){const c=S.candles.map(x=>x.c);if(c.length<100)return;const Hz=12;const r=[];for(let i=0;i+Hz<c.length;i++)r.push(Math.log(c[i+Hz]/c[i]));
+ const one=[];for(let i=1;i<c.length;i++)one.push(Math.log(c[i]/c[i-1]));
+ const mu=r.reduce((a,b)=>a+b,0)/r.length,sd=Math.sqrt(r.reduce((a,b)=>a+(b-mu)**2,0)/r.length);const p=c.at(-1);
+ const cv=$('dist'),W=cv.width=cv.clientWidth*devicePixelRatio,H=cv.height=170*devicePixelRatio,g=cv.getContext('2d');g.clearRect(0,0,W,H);
+ const lo=mu-4*sd,hi=mu+4*sd,nb=36,bins=Array(nb).fill(0);r.forEach(x=>{const k=Math.floor((x-lo)/(hi-lo)*nb);if(k>=0&&k<nb)bins[k]++});const mx=Math.max(...bins);
+ bins.forEach((v,i)=>{const x0=lo+(i+0.5)/nb*(hi-lo);g.fillStyle=x0>=0?'#22e39bcc':'#ff4d6dcc';const h=v/mx*(H-30);g.fillRect(i*W/nb+1,H-18-h,W/nb-2,h)});
+ g.strokeStyle='#f5c542';g.lineWidth=2;g.beginPath();for(let i=0;i<=100;i++){const x=lo+i/100*(hi-lo);const yv=Math.exp(-((x-mu)**2)/(2*sd*sd));const X=i/100*W,Y=H-18-yv*(H-30);i?g.lineTo(X,Y):g.moveTo(X,Y)}g.stroke();
+ g.fillStyle='#8a8f9c';g.font=`${9*devicePixelRatio}px IBM Plex Mono`;[-2,0,2].forEach(k=>{const v=mu+k*sd;g.fillText(sgn((Math.exp(v)-1)*p,1)+'$',((v-lo)/(hi-lo))*W-14,H-4)});
+ const up=r.filter(x=>x>0).length/r.length;
+ let ptp='—';if(S.an){const L=S.an.levels,dir=L.side==='BUY'?1:-1,sl=L.sl_dist,tpd=sl*1.5;let w=0,l=0;for(let k=0;k<1000;k++){let q=p;for(let s=0;s<200;s++){q*=Math.exp(one[Math.floor(Math.random()*one.length)]);const m=(q-p)*dir;if(m>=tpd){w++;break}if(m<=-sl){l++;break}}}ptp=(w/(w+l||1)*100).toFixed(0)+'% ('+L.side+')'}
+ $('prH').textContent=`อีก ${Hz} แท่ง ${S.tf}`;
+ $('prKv').innerHTML=`<span>โอกาสราคาสูงขึ้น (ย้อนหลัง)</span><b class="${up>=0.5?'up':'dn'}">${(up*100).toFixed(1)}%</b><span>±1σ ช่วงราคา</span><b>±$${fmt(sd*p)}</b><span>ช่วง 68%</span><b>${fmt(p*Math.exp(mu-sd)+S.basis)} – ${fmt(p*Math.exp(mu+sd)+S.basis)}</b><span>โอกาสแตะ TP1 ก่อน SL</span><b class="gd">${ptp}</b>`;}
+
+// ---------- selectors ----------
+['1m','5m','15m','1h','4h'].forEach(t=>{const b=document.createElement('button');b.textContent=t;b.onclick=()=>{S.tf=localStorage.pgTf=t;mark();loadCandles().then(connect)};$('tfSel').appendChild(b)});
+[1,2,3,5,10,15].forEach(m=>{const b=document.createElement('button');b.textContent=m+' นาที';b.dataset.m=m;b.onclick=()=>{S.iv=+m;localStorage.pgIv=m;mark();loadAI()};$('ivSel').appendChild(b)});
+function mark(){[...$('tfSel').children].forEach(b=>b.classList.toggle('on',b.textContent===S.tf));[...$('ivSel').children].forEach(b=>b.classList.toggle('on',+b.dataset.m===S.iv));
+ $('pxToggle').textContent=S.adj?'แสดง PAXG ดิบ':'แสดง XAU (ปรับ)';$('chMode').textContent=S.adj?'XAU (PAXG+basis)':'PAXG/USDT ดิบ';}
+$('pxToggle').onclick=()=>{S.adj=!S.adj;localStorage.pgAdj=S.adj?'1':'0';mark();drawSeries()};
+mark();
+async function loadTrades(){try{const r=await rest('/api/v3/aggTrades?symbol=PAXGUSDT&limit=40');S.trades=r.reverse().map(d=>({p:+d.p,q:+d.q,s:d.m?'S':'B',T:d.T}));if(!S.last&&S.trades[0])S.last=S.trades[0].p}catch(e){}}
+(async()=>{await loadAI();loadTrades();try{await loadCandles()}catch(e){console.warn('klines',e)}connect();spotLoop();})();
+window.addEventListener('resize',()=>{if(S.an)spectro();renderTrack();pricer()});
+</script>
+</body>
+</html>
